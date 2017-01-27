@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{F6FB7CAD-7FBA-448B-98D7-B20FA24600BF}</ProjectGuid>
+    <ProjectGuid>{7F18A888-1B51-472B-ACEB-F8DA092E7467}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NVidiaOptimusFixer</RootNamespace>
@@ -57,10 +57,8 @@
     <ApplicationIcon>repair.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EasyHook, Version=2.5.0.0, Culture=neutral, PublicKeyToken=4b580fca19d0b0c5, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\ScreenshotInject\EasyHookBinaries\EasyHook.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="EasyHook">
+      <HintPath>..\lib\EasyHook.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

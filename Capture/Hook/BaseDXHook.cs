@@ -27,9 +27,27 @@ namespace Capture.Hook
 
             Interface.ScreenshotRequested += InterfaceEventProxy.ScreenshotRequestedProxyHandler;
             Interface.DisplayText += InterfaceEventProxy.DisplayTextProxyHandler;
+            Interface.RemoteMessage += InterfaceEventProxy.MessageReceivedHandler;
             InterfaceEventProxy.ScreenshotRequested += new ScreenshotRequestedEvent(InterfaceEventProxy_ScreenshotRequested);
             InterfaceEventProxy.DisplayText += new DisplayTextEvent(InterfaceEventProxy_DisplayText);
+            InterfaceEventProxy.MessageReceived += InterfaceEventProxy_MessageReceived;
         }
+
+        private void InterfaceEventProxy_MessageReceived(MessageReceivedEventArgs message)
+        {
+            const string prefix = "ShowFPS=";
+            if (message.MessageType == MessageType.Information && message.Message.StartsWith(prefix))
+            {
+                string valueString = message.Message.Substring(prefix.Length);
+                int value = 0;
+                if (int.TryParse(valueString, out value))
+                {
+                    bool wantFps = value != 0;
+                    this.Config.ShowOverlay = wantFps;
+                }
+            }
+        }
+
         ~BaseDXHook()
         {
             Dispose(false);
@@ -79,7 +97,7 @@ namespace Capture.Hook
                 return "BaseDXHook";
             }
         }
-
+           
         protected void Frame()
         {
             FPS.Frame();

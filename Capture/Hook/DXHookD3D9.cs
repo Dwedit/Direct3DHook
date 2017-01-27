@@ -10,10 +10,12 @@ using System.Threading;
 using System.Drawing;
 using Capture.Interface;
 using SharpDX.Direct3D9;
+using System.Diagnostics;
+using SharpDX;
 
 namespace Capture.Hook
 {
-    internal class DXHookD3D9: BaseDXHook
+    internal class DXHookD3D9 : BaseDXHook
     {
         public DXHookD3D9(CaptureInterface ssInterface)
             : base(ssInterface)
@@ -134,7 +136,7 @@ namespace Capture.Hook
              * The following ensures that all threads are intercepted:
              * Note: you must do this for each hook.
              */
-            
+
             Direct3DDevice_EndSceneHook.Activate();
             Hooks.Add(Direct3DDevice_EndSceneHook);
 
@@ -197,7 +199,7 @@ namespace Capture.Hook
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode, SetLastError = true)]
         unsafe delegate int Direct3D9DeviceEx_PresentExDelegate(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion, Present dwFlags);
-        
+
 
         /// <summary>
         /// Reset the _renderTarget so that we are sure it will have the correct presentation parameters (required to support working across changes to windowed/fullscreen or resolution changes)
@@ -226,9 +228,14 @@ namespace Capture.Hook
 
             DoCaptureRenderTarget(device, "PresentEx");
 
-            return Direct3DDeviceEx_PresentExHook.Original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+            //shantae half genie hero uses Direct3D9Ex
+            DoVblankWait();
+
+            int result = Direct3DDeviceEx_PresentExHook.Original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+            return result;
+
         }
-        
+
         unsafe int PresentHook(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion)
         {
             _isUsingPresent = true;
@@ -237,8 +244,20 @@ namespace Capture.Hook
 
             DoCaptureRenderTarget(device, "PresentHook");
 
-            return Direct3DDevice_PresentHook.Original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+            DoVblankWait();
+
+            int result = Direct3DDevice_PresentHook.Original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+
+            return result;
         }
+
+        void DoVblankWait()
+        {
+            IntPtr hdc = NativeMethods.GetDC(IntPtr.Zero);
+            NativeMethods.GetPixel(hdc, IntPtr.Zero, IntPtr.Zero);
+            NativeMethods.ReleaseDC(IntPtr.Zero, hdc);
+        }
+
 
         /// <summary>
         /// Hook for IDirect3DDevice9.EndScene
@@ -265,7 +284,7 @@ namespace Capture.Hook
         void DoCaptureRenderTarget(Device device, string hook)
         {
             this.Frame();
-            
+
             try
             {
                 #region Screenshot Request
@@ -278,7 +297,7 @@ namespace Capture.Hook
                     // the data and access it on another thread.
 
                     _queryIssued = false;
-                    
+
                     // Lock the render target
                     SharpDX.Rectangle rect;
                     SharpDX.DataRectangle lockedRect = LockRenderTarget(_renderTargetCopy, out rect);
@@ -354,14 +373,14 @@ namespace Capture.Hook
                                 }
                             }
                         }
-                            
+
                         // Copy data from resolved target to our render target copy
                         device.GetRenderTargetData(_resolvedTarget, _renderTargetCopy);
 
                         _requestCopy = Request.Clone();
                         _query.Issue(Issue.End);
                         _queryIssued = true;
-                        
+
                     }
                     finally
                     {
@@ -437,10 +456,10 @@ namespace Capture.Hook
         {
             if (_resourcesInitialised) return;
             _resourcesInitialised = true;
-            
+
             // Create offscreen surface to use as copy of render target data
             _renderTargetCopy = ToDispose(Surface.CreateOffscreenPlain(device, width, height, format, Pool.SystemMemory));
-            
+
             // Create our resolved surface (resizing if necessary and to resolve any multi-sampling)
             _resolvedTarget = ToDispose(Surface.CreateRenderTarget(device, width, height, format, MultisampleType.None, 0, false));
 

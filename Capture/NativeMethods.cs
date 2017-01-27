@@ -155,5 +155,16 @@ namespace Capture
         }
 
         #endregion
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll")]
+        internal static extern IntPtr GetPixel(IntPtr hdc, IntPtr nXPos, IntPtr nYPos);
+
+
     }
 }

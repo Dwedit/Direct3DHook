@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Collections;
 
 namespace TestScreenshot
 {
@@ -120,7 +121,7 @@ namespace TestScreenshot
             ForceMinimized = 11
         }
         #endregion
-        
+
         /// <summary>
         /// The GetForegroundWindow function returns a handle to the foreground window.
         /// </summary>
@@ -135,6 +136,37 @@ namespace TestScreenshot
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool IsIconic(IntPtr hWnd);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
+
         #endregion
+
+        [DllImport("psapi.dll", SetLastError = true)]
+        internal static extern bool EnumProcessModulesEx(IntPtr processHandle, IntPtr modules, int size, ref int needed, int filterFlag);
+
+        internal static List<IntPtr> EnumProcessModulesEx(IntPtr processHandle)
+        {
+            IntPtr[] modules = new IntPtr[1024];
+            GCHandle gcHandle = GCHandle.Alloc(modules, GCHandleType.Pinned);
+            int needed = 0;
+            bool okay = EnumProcessModulesEx(processHandle, gcHandle.AddrOfPinnedObject(), modules.Length, ref needed, 0x03);
+            if (okay)
+            {
+                List<IntPtr> list = new List<IntPtr>();
+                for (int i = 0; i < modules.Length; i++)
+                {
+                    IntPtr value = modules[i];
+                    if (value != IntPtr.Zero)
+                    {
+                        list.Add(value);
+                    }
+                }
+                return list;
+            }
+            return new List<IntPtr>();
+        }
+
+        [DllImport("psapi.dll")]
+        internal static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] [MarshalAs(UnmanagedType.U4)] int nSize);
     }
 }

@@ -455,6 +455,8 @@ namespace Capture.Interface
         /// </summary>
         public event DisplayTextEvent DisplayText;
 
+        public event MessageReceivedEvent MessageReceived;
+
         #endregion
 
         #region Lifetime Services
@@ -497,6 +499,12 @@ namespace Capture.Interface
         {
             if (DisplayText != null)
                 DisplayText(args);
+        }
+
+        public void MessageReceivedHandler(MessageReceivedEventArgs args)
+        {
+            if (MessageReceived != null)
+                MessageReceived(args);
         }
     }
 }

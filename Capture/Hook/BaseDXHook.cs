@@ -101,8 +101,10 @@ namespace Capture.Hook
         protected void Frame()
         {
             FPS.Frame();
-            if (TextDisplay != null && TextDisplay.Display) 
+            if (TextDisplay != null && TextDisplay.Display)
+            {
                 TextDisplay.Frame();
+            }
         }
 
         protected void DebugMessage(string message)

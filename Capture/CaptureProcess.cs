@@ -38,11 +38,10 @@ namespace Capture
         /// <remarks>The target process will have its main window brought to the foreground after successful injection.</remarks>
         public CaptureProcess(Process process, CaptureConfig config, CaptureInterface captureInterface)
         {
-            // If the process doesn't have a mainwindowhandle yet, skip it (we need to be able to get the hwnd to set foreground etc)
-            if (process.MainWindowHandle == IntPtr.Zero)
-            {
-                throw new ProcessHasNoWindowHandleException();
-            }
+            //if (hwnd == IntPtr.Zero)
+            //{
+            //    throw new ProcessHasNoWindowHandleException();
+            //}
 
             // Skip if the process is already hooked (and we want to hook multiple applications)
             if (HookManager.IsHooked(process.Id))
@@ -62,7 +61,6 @@ namespace Capture
 
             try
             {
-
                 // Inject DLL into target process
                 RemoteHooking.Inject(
                     process.Id,
@@ -89,7 +87,7 @@ namespace Capture
             // Note: the first Alt+Tab out of the target application after injection
             //       may still be an issue - switching between windowed and 
             //       fullscreen fixes the issue however (see ScreenshotInjection.cs for another option)
-            BringProcessWindowToFront();
+            //BringProcessWindowToFront();
         }
 
         public CaptureInterface CaptureInterface

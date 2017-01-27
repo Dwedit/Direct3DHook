@@ -46,8 +46,9 @@ namespace Capture.Hook
         }
 
         List<IntPtr> id3dDeviceFunctionAddresses = new List<IntPtr>();
-        //List<IntPtr> id3dDeviceExFunctionAddresses = new List<IntPtr>();
+        List<IntPtr> id3dSwapChainFunctionAddresses = new List<IntPtr>();
         const int D3D9_DEVICE_METHOD_COUNT = 119;
+        const int D3D9_SWAPCHAIN_METHOD_COUNT = 10;
         const int D3D9Ex_DEVICE_METHOD_COUNT = 15;
         bool _supportsDirect3D9Ex = false;
         public override void Hook()

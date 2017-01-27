@@ -151,4 +151,22 @@ namespace Capture.Hook
         GetDisplayModeEx = 133,
     }
 
+    public enum Direct3DSwapChain9FunctionOrdinals : short
+    {
+        QueryInterface = 0,
+        AddRef = 1,
+        Release = 2,
+        Present = 3,
+        GetFrontBufferData = 4,
+        GetBackBuffer = 5,
+        GetRasterStatus = 6,
+        GetDisplayMode = 7,
+        GetDevice = 8,
+        GetPresentParameters = 9,
+        //EX
+        GetLastPresentCount = 10,
+        GetPresentStats = 11,
+        GetDisplayModeEx = 12,
+    }
+
 }

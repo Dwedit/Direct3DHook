@@ -42,7 +42,7 @@ namespace TestScreenshot
 
         }
         Dictionary<IntPtr, ProcStatus> windowInfo = new Dictionary<IntPtr, ProcStatus>();
-        HashSet<ProcStatus> hookedProcesses = new HashSet<ProcStatus>();
+        Dictionary<int, ProcStatus> hookedProcesses = new Dictionary<int, ProcStatus>();
         HashSet<string> Blacklist = GetBlackList();
 
         private static HashSet<string> GetBlackList()
@@ -53,6 +53,12 @@ namespace TestScreenshot
             set.Add("palemoon");
             set.Add("nvcplui");
             set.Add("chrome");
+            set.Add("skype");
+            //set.Add("freecell");
+            //set.Add("hearts");
+            //set.Add("spidersolitaire");
+            //set.Add("solitaire");
+            //set.Add("minesweeper");
             return set;
         }
 
@@ -83,14 +89,25 @@ namespace TestScreenshot
             }
             else
             {
-                procStatus = new TestScreenshot.Form2.ProcStatus();
-                procStatus.Hwnd = foregroundWindow;
-                procStatus.ThreadId = NativeMethods.GetWindowThreadProcessId(foregroundWindow, out procStatus.ProcessId);
-                procStatus.Process = Process.GetProcessById(procStatus.ProcessId);
-                procStatus.Name = procStatus.Process.ProcessName;
-                windowInfo[foregroundWindow] = procStatus;
+                int threadId, processId;
+                threadId = NativeMethods.GetWindowThreadProcessId(foregroundWindow, out processId);
 
-                PrintStatus("Found process " + procStatus.Name);
+                if (hookedProcesses.ContainsKey(processId))
+                {
+                    procStatus = hookedProcesses[processId];
+                }
+                else
+                {
+                    procStatus = new TestScreenshot.Form2.ProcStatus();
+                    procStatus.Hwnd = foregroundWindow;
+                    procStatus.ThreadId = threadId;
+                    procStatus.ProcessId = processId;
+                    procStatus.Process = Process.GetProcessById(processId);
+                    procStatus.Name = procStatus.Process.ProcessName;
+                    windowInfo[foregroundWindow] = procStatus;
+
+                    PrintStatus("Found process " + procStatus.Name);
+                }
             }
 
             if (procStatus.Hooked)
@@ -120,7 +137,14 @@ namespace TestScreenshot
             {
                 if (!Blacklist.Contains(procStatus.Name))
                 {
-                    if (HookProcess(procStatus))
+                    try
+                    {
+                        if (HookProcess(procStatus))
+                        {
+                            procStatus.Hooked = true;
+                        }
+                    }
+                    catch (ProcessAlreadyHookedException ex)
                     {
                         procStatus.Hooked = true;
                     }
@@ -162,6 +186,11 @@ namespace TestScreenshot
 
         private void PrintStatus(string line)
         {
+            if (!this.Visible)
+            {
+                return;
+            }
+
             bool scrolledToBottom = textBox1.SelectionStart == textBox1.Text.Length;
             if (this.textBox1.Text != "")
             {
@@ -232,7 +261,7 @@ namespace TestScreenshot
             captureInterface.RemoteMessage += CaptureInterface_RemoteMessage;
             procStatus.CaptureProcess = new CaptureProcess(procStatus.Process, cc, captureInterface);
             PrintStatus("* Hooked " + procStatus.Name);
-            hookedProcesses.Add(procStatus);
+            hookedProcesses.Add(procStatus.ProcessId,procStatus);
             AddExitHook(procStatus);
             return true;
         }
@@ -241,7 +270,7 @@ namespace TestScreenshot
         {
             var handler = new EventHandler((sender, e) =>
             {
-                this.hookedProcesses.Remove(procStatus);
+                this.hookedProcesses.Remove(procStatus.ProcessId);
             });
             procStatus.Process.Exited += handler;
         }
@@ -268,7 +297,7 @@ namespace TestScreenshot
 
         private void Form2_FormClosed(object sender, FormClosedEventArgs e)
         {
-            foreach (var item in this.hookedProcesses.ToArray())
+            foreach (var item in this.hookedProcesses.Values.ToArray())
             {
                 if (item.CaptureProcess != null)
                 {
@@ -291,7 +320,7 @@ namespace TestScreenshot
         private void ShowFPSChanged(bool showingFps)
         {
             showFPSToolStripMenuItem.Checked = showingFps;
-            foreach (var proc in this.hookedProcesses.ToArray())
+            foreach (var proc in this.hookedProcesses.Values.ToArray())
             {
                 if (proc.CaptureProcess != null && !proc.CaptureProcess.Process.HasExited)
                 {
